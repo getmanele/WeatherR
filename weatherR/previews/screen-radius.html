@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>weatherR — радиус</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 640px; height: 360px; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    color: #e9fff3;
+    background: linear-gradient(165deg, #123528 0%, #0c241b 48%, #081710 100%);
+  }
+  .wrap { height: 360px; display: grid; grid-template-columns: 248px 1fr; }
+  .side { padding: 18px 18px 16px 22px; display: flex; flex-direction: column; }
+  .brand { font-weight: 650; letter-spacing: -0.04em; font-size: 22px; }
+  .brand span { color: #9dffc4; }
+  h1 { margin-top: 22px; font-size: 28px; line-height: 1.05; font-weight: 620; letter-spacing: -0.03em; }
+  p { margin-top: 10px; color: #b7d8c6; font-size: 14px; line-height: 1.35; }
+  .footer { margin-top: auto; display: flex; flex-direction: column; gap: 8px; }
+  .row { display: flex; justify-content: space-between; font-size: 13px; color: #d7f5e6; }
+  .row span { color: #8fbfa6; }
+  .map {
+    position: relative;
+    margin: 16px 16px 16px 0;
+    border-radius: 22px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 52%, rgba(190, 255, 214, 0.16), transparent 42%),
+      linear-gradient(180deg, #1a4a36, #123728);
+    border: 1px solid rgba(190, 255, 214, 0.18);
+  }
+  svg { width: 100%; height: 100%; display: block; }
+  .tag {
+    position: absolute; left: 16px; bottom: 12px;
+    font-size: 12px; color: #d9ffe9;
+    background: rgba(8, 28, 20, 0.55);
+    border-radius: 999px; padding: 5px 10px;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="side">
+      <div class="brand">weather<span>R</span></div>
+      <h1>Щецин<br/>± 50 км</h1>
+      <p>Погода в городе и в кольце вокруг него: Полице, Голенюв, Грыфино, Старгард.</p>
+      <div class="footer">
+        <div class="row">центр <span>Щецин · 14°</span></div>
+        <div class="row">кольцо <span>50 км</span></div>
+        <div class="row">точки <span>4 города</span></div>
+      </div>
+    </div>
+    <div class="map">
+      <svg viewBox="0 0 360 328">
+        <path d="M40 70 C90 40, 150 90, 180 60 C230 20, 300 80, 330 50 L330 300 C250 250, 180 290, 40 260 Z" fill="#1e5c42" opacity="0.85"/>
+        <path d="M0 150 C70 130, 120 180, 190 150 C250 126, 300 170, 360 150 L360 328 L0 328 Z" fill="#0e3a2c"/>
+        <path d="M150 40 C170 90, 155 140, 175 190 C190 230, 170 270, 190 320" stroke="#8ee0b4" stroke-width="8" fill="none" opacity="0.55" stroke-linecap="round"/>
+        <circle cx="188" cy="168" r="92" fill="none" stroke="#d9ffe8" stroke-width="1.5" stroke-dasharray="4 5" opacity="0.8"/>
+        <circle cx="188" cy="168" r="7" fill="#f4fff8"/>
+        <text x="200" y="164" fill="#f4fff8" font-size="13" font-family="-apple-system, sans-serif">Щецин 14°</text>
+        <circle cx="150" cy="118" r="4" fill="#b6ffd4"/>
+        <text x="108" y="108" fill="#d9ffe9" font-size="11" font-family="-apple-system, sans-serif">Голенюв 13°</text>
+        <circle cx="236" cy="126" r="4" fill="#b6ffd4"/>
+        <text x="246" y="130" fill="#d9ffe9" font-size="11" font-family="-apple-system, sans-serif">Полице 14°</text>
+        <circle cx="128" cy="214" r="4" fill="#b6ffd4"/>
+        <text x="78" y="234" fill="#d9ffe9" font-size="11" font-family="-apple-system, sans-serif">Грыфино 13°</text>
+        <circle cx="250" cy="214" r="4" fill="#b6ffd4"/>
+        <text x="214" y="246" fill="#d9ffe9" font-size="11" font-family="-apple-system, sans-serif">Старгард 12°</text>
+      </svg>
+      <div class="tag">зона расчёта · 50 км</div>
+    </div>
+  </div>
+</body>
+</html>

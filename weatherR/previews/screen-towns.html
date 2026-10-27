@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>weatherR — города</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 640px; height: 360px; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    color: #123127;
+    background:
+      radial-gradient(480px 220px at 100% 0%, #d9ffe8, transparent 50%),
+      linear-gradient(180deg, #eefaf3 0%, #d7f3e4 100%);
+  }
+  .wrap { height: 360px; padding: 16px 18px 14px; display: flex; flex-direction: column; }
+  .top { display: flex; align-items: center; justify-content: space-between; }
+  .brand { font-weight: 680; letter-spacing: -0.04em; font-size: 22px; color: #123127; }
+  .brand span { color: #1f8f57; }
+  .chip { font-size: 12px; background: #123127; color: #e7fff2; border-radius: 999px; padding: 6px 10px; }
+  h1 { margin-top: 14px; font-size: 20px; font-weight: 640; letter-spacing: -0.03em; }
+  .grid { margin-top: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .card {
+    background: rgba(255,255,255,0.72);
+    border: 1px solid rgba(18, 49, 39, 0.08);
+    border-radius: 16px;
+    padding: 12px 10px 10px;
+    min-height: 168px;
+    display: flex;
+    flex-direction: column;
+  }
+  .card em { font-style: normal; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #3d7a5c; }
+  .card strong { display: block; margin-top: 8px; font-size: 34px; letter-spacing: -0.04em; font-weight: 600; }
+  .card b { font-weight: 600; font-size: 13px; margin-top: 4px; }
+  .card span { margin-top: auto; font-size: 12px; color: #3d6b54; }
+  .bar { margin-top: 12px; display: flex; gap: 8px; }
+  .slot {
+    flex: 1; background: #123127; color: #e9fff3; border-radius: 12px;
+    padding: 8px 10px; display: flex; justify-content: space-between; align-items: center;
+    font-size: 13px;
+  }
+  .slot b { font-weight: 620; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">weather<span>R</span></div>
+      <div class="chip">в пределах 50 км</div>
+    </div>
+    <h1>Погода вокруг Щецина</h1>
+    <div class="grid">
+      <div class="card">
+        <em>12 км</em>
+        <strong>14°</strong>
+        <b>Полице</b>
+        <span>ясно</span>
+      </div>
+      <div class="card">
+        <em>22 км</em>
+        <strong>13°</strong>
+        <b>Голенюв</b>
+        <span>облачно</span>
+      </div>
+      <div class="card">
+        <em>24 км</em>
+        <strong>13°</strong>
+        <b>Грыфино</b>
+        <span>слабый дождь</span>
+      </div>
+      <div class="card">
+        <em>36 км</em>
+        <strong>12°</strong>
+        <b>Старгард</b>
+        <span>ветер 6 м/с</span>
+      </div>
+    </div>
+    <div class="bar">
+      <div class="slot"><span>Щецин, центр</span><b>14°</b></div>
+      <div class="slot"><span>дальше 50 км не берём</span><b>радиус</b></div>
+    </div>
+  </div>
+</body>
+</html>
