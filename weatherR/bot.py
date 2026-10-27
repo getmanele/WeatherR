@@ -230,7 +230,7 @@ def forecast(lat, lon):
         {
             "latitude": lat,
             "longitude": lon,
-            "current": "temperature_2m,weather_code,wind_speed_10m,precipitation",
+            "current": "temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,precipitation",
             "hourly": "precipitation,weather_code",
             "forecast_hours": 48,
             "wind_speed_unit": "ms",
@@ -262,6 +262,9 @@ def describe(place, lat, lon, center):
         "temp_label": averaged["temp_label"],
         "condition": averaged["condition"],
         "wind_label": averaged["wind_label"],
+        "wind_deg": averaged.get("wind_deg"),
+        "gust_label": averaged.get("gust_label"),
+        "humidity_label": averaged.get("humidity_label"),
         "distance_km": round(distance, 1),
         "distance_label": f"{format_number(distance, 1)} км",
         "rain_label": averaged["rain_label"],
@@ -372,13 +375,18 @@ def clean_text(value, limit=64):
     return text[:limit] or None
 
 
-def remember_user(telegram_id, username=None, first_name=None, last_name=None, language_code=None, lat=None, lon=None, init_data=""):
+def remember_user(telegram_id, username=None, first_name=None, last_name=None, language_code=None, lat=None, lon=None, init_data="", keep_language=False):
     if isinstance(telegram_id, bool) or not isinstance(telegram_id, int) or telegram_id <= 0:
         raise ValueError("telegram_id")
     now = datetime.now(WARSAW).replace(microsecond=0).isoformat()
+    language_set = (
+        "COALESCE(users.language_code, excluded.language_code)"
+        if keep_language
+        else "COALESCE(excluded.language_code, users.language_code)"
+    )
     with connect_db() as conn:
         conn.execute(
-            """
+            f"""
             INSERT INTO users (
                 telegram_id, username, first_name, last_name, language_code,
                 added_at, last_seen_at, lat, lon, init_data
@@ -388,7 +396,7 @@ def remember_user(telegram_id, username=None, first_name=None, last_name=None, l
                 username = COALESCE(excluded.username, users.username),
                 first_name = COALESCE(excluded.first_name, users.first_name),
                 last_name = COALESCE(excluded.last_name, users.last_name),
-                language_code = COALESCE(excluded.language_code, users.language_code),
+                language_code = {language_set},
                 last_seen_at = excluded.last_seen_at,
                 lat = COALESCE(excluded.lat, users.lat),
                 lon = COALESCE(excluded.lon, users.lon),
@@ -530,6 +538,7 @@ class AppHandler(SimpleHTTPRequestHandler):
                 lat=lat,
                 lon=lon,
                 init_data=init_data,
+                keep_language=True,
             )
         except (sqlite3.Error, ValueError, OSError):
             self.send_json({"error": "store_failed"}, 500)
@@ -583,23 +592,158 @@ def telegram(method, payload=None, timeout=20):
         return json.load(response)
 
 
-def reply_markup():
-    if not WEBAPP_URL.startswith("https://"):
+WELCOME = {
+    "ru": "weatherR — погода в Щецине и в радиусе 50 км.\nОткройте приложение кнопкой ниже. Справка: /help",
+    "en": "weatherR — weather in Szczecin within 50 km.\nOpen the app with the button below. Help: /help",
+    "pl": "weatherR — pogoda w Szczecinie w promieniu 50 km.\nOtwórz aplikację przyciskiem poniżej. Pomoc: /help",
+    "uk": "weatherR — погода в Щецині в радіусі 50 км.\nВідкрийте застосунок кнопкою нижче. Довідка: /help",
+    "de": "weatherR — Wetter in Stettin im Umkreis von 50 km.\nÖffnen Sie die App mit der Taste unten. Hilfe: /help",
+}
+HELP = {
+    "ru": (
+        "weatherR 0.12 — погода в Щецине ± 50 км.\n\n"
+        "Открытие\n"
+        "Синяя кнопка weatherR слева от поля ввода и «Открыть weatherR» открывают приложение. "
+        "Язык выбирается внутри: русский, английский, польский, украинский, немецкий.\n\n"
+        "Карта\n"
+        "Кольцо 50 км занимает большую часть экрана и подстраивается под телефон. "
+        "Подписи городов не наезжают друг на друга. О дожде на карте написано, только если он уже идёт или начнётся в ближайшие 5 минут. "
+        "Штрихи ветра показывают ветер выбранной точки.\n\n"
+        "За кольцом\n"
+        "Хощно и Хмельницкий стоят под кольцом, только названием, на стороне от вашего места.\n\n"
+        "Список\n"
+        "Прокрутите точки. В строке — средний ветер и порыв. На экране видно около трёх точек. Выбранная подсвечивается.\n\n"
+        "Под заголовком\n"
+        "weatherR и «Щецин ± 50 км» в одной строке. Ниже полная сводка и кнопки: дождь, средний ветер, порыв, влажность.\n\n"
+        "Ваше место\n"
+        "Сохраните место кнопкой внизу. Она сменится на GEO+. Если там примерно через 5 минут начнётся дождь, бот напишет в этот чат."
+    ),
+    "en": (
+        "weatherR 0.12 — weather in Szczecin ± 50 km.\n\n"
+        "Open\n"
+        "The blue weatherR button left of the message field and “Open weatherR” open the app. "
+        "The language is chosen inside: Russian, English, Polish, Ukrainian, German.\n\n"
+        "Map\n"
+        "The 50 km ring takes most of the screen and fits the phone. "
+        "City labels do not overlap. A rain line appears on the map only if rain is falling or starts within 5 minutes. "
+        "Wind streaks follow the selected place.\n\n"
+        "Outside the ring\n"
+        "Choszczno and Khmelnytskyi sit below the ring, name only, on the side away from your place.\n\n"
+        "List\n"
+        "Scroll the places. Each row shows average wind and gust. About three places fit on screen. The selected one is highlighted.\n\n"
+        "Under the title\n"
+        "weatherR and “Szczecin ± 50 km” are on one line. Below that: the full summary and buttons for rain, average wind, gust and humidity.\n\n"
+        "Your place\n"
+        "Save it with the button at the bottom. The button becomes GEO+. If rain is due there in about 5 minutes, the bot writes in this chat."
+    ),
+    "pl": (
+        "weatherR 0.12 — pogoda w Szczecinie ± 50 km.\n\n"
+        "Otwarcie\n"
+        "Niebieski przycisk weatherR po lewej stronie pola wiadomości i „Otwórz weatherR” otwierają aplikację. "
+        "Język wybiera się w środku: rosyjski, angielski, polski, ukraiński, niemiecki.\n\n"
+        "Mapa\n"
+        "Pierścień 50 km zajmuje większość ekranu i dopasowuje się do telefonu. "
+        "Podpisy miast nie nachodzą na siebie. O deszczu na mapie jest napis tylko wtedy, gdy już pada albo zacznie się w ciągu 5 minut. "
+        "Kreski wiatru pokazują wiatr wybranego punktu.\n\n"
+        "Poza pierścieniem\n"
+        "Choszczno i Chmielnicki stoją pod pierścieniem, sama nazwa, po stronie dalszej od twojego miejsca.\n\n"
+        "Lista\n"
+        "Przewiń punkty. W wierszu jest średni wiatr i poryw. Na ekranie widać około trzech punktów. Wybrany jest podświetlony.\n\n"
+        "Pod tytułem\n"
+        "weatherR i „Szczecin ± 50 km” są w jednej linii. Niżej pełne podsumowanie i przyciski: deszcz, średni wiatr, poryw, wilgotność.\n\n"
+        "Twoje miejsce\n"
+        "Zapisz je przyciskiem na dole. Przycisk zmieni się w GEO+. Jeśli deszcz zacznie się tam za około 5 minut, bot napisze na tym czacie."
+    ),
+    "uk": (
+        "weatherR 0.12 — погода в Щецині ± 50 км.\n\n"
+        "Відкриття\n"
+        "Синя кнопка weatherR ліворуч від поля повідомлення і «Відкрити weatherR» відкривають застосунок. "
+        "Мову обирають усередині: російська, англійська, польська, українська, німецька.\n\n"
+        "Карта\n"
+        "Кільце 50 км займає більшу частину екрана і підлаштовується під телефон. "
+        "Підписи міст не накладаються. Про дощ на карті написано, лише якщо він уже йде або почнеться протягом 5 хвилин. "
+        "Риски вітру показують вітер вибраної точки.\n\n"
+        "За кільцем\n"
+        "Хощно і Хмельницький стоять під кільцем, лише назвою, з боку від вашого місця.\n\n"
+        "Список\n"
+        "Прокрутіть точки. У рядку — середній вітер і порив. На екрані видно близько трьох точок. Вибрана підсвічується.\n\n"
+        "Під заголовком\n"
+        "weatherR і «Щецин ± 50 км» в одному рядку. Нижче повна сводка і кнопки: дощ, середній вітер, порив, вологість.\n\n"
+        "Ваше місце\n"
+        "Збережіть місце кнопкою внизу. Вона зміниться на GEO+. Якщо там приблизно за 5 хвилин почнеться дощ, бот напише в цей чат."
+    ),
+    "de": (
+        "weatherR 0.12 — Wetter in Stettin ± 50 km.\n\n"
+        "Öffnen\n"
+        "Die blaue Taste weatherR links vom Eingabefeld und „weatherR öffnen“ öffnen die App. "
+        "Die Sprache wird in der App gewählt: Russisch, Englisch, Polnisch, Ukrainisch, Deutsch.\n\n"
+        "Karte\n"
+        "Der 50-km-Ring nimmt den größten Teil des Bildschirms ein und passt sich dem Telefon an. "
+        "Ortsnamen überlappen sich nicht. Regen steht auf der Karte nur, wenn er schon fällt oder in 5 Minuten beginnt. "
+        "Die Windstriche zeigen den Wind des gewählten Ortes.\n\n"
+        "Außerhalb des Rings\n"
+        "Choszczno und Chmelnyzkyj stehen unter dem Ring, nur der Name, auf der Seite weg von Ihrem Ort.\n\n"
+        "Liste\n"
+        "Orte durchblättern. In der Zeile stehen mittlerer Wind und Böe. Etwa drei Orte passen auf den Bildschirm. Der gewählte ist hervorgehoben.\n\n"
+        "Unter der Überschrift\n"
+        "weatherR und „Stettin ± 50 km“ stehen in einer Zeile. Darunter die volle Zusammenfassung und Tasten: Regen, mittlerer Wind, Böe, Luftfeuchte.\n\n"
+        "Ihr Ort\n"
+        "Speichern Sie ihn mit der Taste unten. Sie wird zu GEO+. Wenn dort in etwa 5 Minuten Regen beginnt, schreibt der Bot in diesen Chat."
+    ),
+}
+OPEN_APP = {
+    "ru": "Открыть weatherR",
+    "en": "Open weatherR",
+    "pl": "Otwórz weatherR",
+    "uk": "Відкрити weatherR",
+    "de": "weatherR öffnen",
+}
+
+
+def language_id(code):
+    short = str(code or "ru").replace("_", "-").split("-")[0].lower()
+    return short if short in WELCOME else "ru"
+
+
+def stored_language(telegram_id):
+    if not DB_PATH.exists() or not isinstance(telegram_id, int):
         return None
-    return {
-        "keyboard": [[{"text": "Открыть weatherR", "web_app": {"url": WEBAPP_URL}}]],
-        "resize_keyboard": True,
-    }
+    with connect_db() as conn:
+        row = conn.execute(
+            "SELECT language_code FROM users WHERE telegram_id = ?",
+            (telegram_id,),
+        ).fetchone()
+    if not row or not row[0]:
+        return None
+    return language_id(row[0])
 
 
-def welcome_text():
+def app_url(lang):
+    parts = urllib.parse.urlsplit(WEBAPP_URL)
+    query = dict(urllib.parse.parse_qsl(parts.query, keep_blank_values=True))
+    query["lang"] = language_id(lang)
+    return urllib.parse.urlunsplit((parts.scheme, parts.netloc, parts.path, urllib.parse.urlencode(query), parts.fragment))
+
+
+def reply_markup(lang):
+    code = language_id(lang)
+    rows = []
     if WEBAPP_URL.startswith("https://"):
-        return "weatherR — погода в Щецине и в радиусе 50 км."
-    return (
-        "weatherR — погода в Щецине и в радиусе 50 км.\n"
-        f"Сейчас приложение доступно локально: {WEBAPP_URL}\n"
-        "Для кнопки внутри Telegram укажите HTTPS-адрес в WEBAPP_URL и перезапустите бота."
-    )
+        rows.append([{"text": OPEN_APP[code], "web_app": {"url": app_url(code)}}])
+    rows.append([{"text": "/help"}])
+    return {"keyboard": rows, "resize_keyboard": True, "is_persistent": True}
+
+
+def welcome_text(lang):
+    return WELCOME[language_id(lang)]
+
+
+def help_text(lang):
+    return HELP[language_id(lang)]
+
+
+def command_name(text):
+    return text.split()[0].split("@", 1)[0].lower()
 
 
 def handle_update(update):
@@ -607,25 +751,33 @@ def handle_update(update):
     text = (message.get("text") or "").strip()
     chat = message.get("chat") or {}
     chat_id = chat.get("id")
-    if not chat_id or not text.startswith(("/start", "/weather", "/app")):
-        return
     sender = message.get("from") or {}
-    if text.startswith("/start") and sender.get("id"):
+    sender_id = sender.get("id")
+    if not chat_id or not text:
+        return
+    command = command_name(text)
+    if command not in ("/start", "/weather", "/app", "/help"):
+        return
+    lang = stored_language(sender_id) or language_id(sender.get("language_code"))
+    if isinstance(sender_id, int) and sender_id > 0:
         try:
             remember_user(
-                sender.get("id"),
+                sender_id,
                 username=sender.get("username"),
                 first_name=sender.get("first_name"),
                 last_name=sender.get("last_name"),
                 language_code=sender.get("language_code"),
+                keep_language=True,
             )
         except (sqlite3.Error, ValueError, OSError) as error:
             print(f"пользователь не записан: {type(error).__name__}", flush=True)
-    payload = {"chat_id": chat_id, "text": welcome_text()}
-    markup = reply_markup()
-    if markup:
-        payload["reply_markup"] = markup
-    telegram("sendMessage", payload)
+        lang = stored_language(sender_id) or lang
+    answer = help_text(lang) if command == "/help" else welcome_text(lang)
+    telegram("sendMessage", {
+        "chat_id": chat_id,
+        "text": answer,
+        "reply_markup": reply_markup(lang),
+    })
 
 
 def rain_watch_loop():
@@ -732,7 +884,7 @@ def configure_bot():
         {
             "commands": [
                 {"command": "start", "description": "Открыть weatherR"},
-                {"command": "weather", "description": "Погода в Щецине ± 50 км"},
+                {"command": "help", "description": "Справка"},
             ]
         },
     )

@@ -215,9 +215,17 @@
     return LANGS.some((item) => item.id === id) ? id : null;
   }
 
+  function urlLang() {
+    const id = new URLSearchParams(window.location.search).get("lang");
+    const short = String(id || "").slice(0, 2).toLowerCase();
+    return LANGS.some((item) => item.id === short) ? short : null;
+  }
+
   function choose() {
+    const fromUrl = urlLang();
     const saved = localStorage.getItem(KEY);
-    const initial = saved || telegramLang();
+    const initial = fromUrl || saved || telegramLang();
+    if (fromUrl) localStorage.setItem(KEY, fromUrl);
     if (initial && LANGS.some((item) => item.id === initial)) {
       return loadPack(initial).then(() => {
         apply();

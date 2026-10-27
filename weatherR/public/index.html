@@ -11,21 +11,43 @@
 </head>
 <body>
   <main class="wrap">
-    <section class="side">
-      <div class="brand">weather<span>R</span></div>
-      <h1><span id="city-title" data-i18n="place.szczecin">Щецин</span><br/><span data-i18n="radius">± 50 км</span></h1>
+    <section class="map" aria-label="Карта радиуса 50 км вокруг Щецина">
+      <svg id="chart" viewBox="0 0 360 328" preserveAspectRatio="xMidYMid meet">
+        <g id="land">
+          <path d="M40 70 C90 40, 150 90, 180 60 C230 20, 300 80, 330 50 L330 300 C250 250, 180 290, 40 260 Z" fill="#123528" opacity="0.95"/>
+          <path d="M0 150 C70 130, 120 180, 190 150 C250 126, 300 170, 360 150 L360 328 L0 328 Z" fill="#081710"/>
+          <path d="M150 40 C170 90, 155 140, 175 190 C190 230, 170 270, 190 320" stroke="#8ee0b4" stroke-width="8" fill="none" opacity="0.55" stroke-linecap="round"/>
+        </g>
+        <circle id="ring" cx="188" cy="168" r="92" fill="none" stroke="#d9ffe8" stroke-width="1.5" stroke-dasharray="4 5" opacity="0.8"/>
+        <g id="wind"></g>
+        <g id="markers"></g>
+      </svg>
+      <div id="flanks"></div>
+      <div class="users" id="users" data-i18n="users_unknown">Пользователей …</div>
+      <div class="tag" data-i18n="zone">зона расчёта · 50 км</div>
+    </section>
+    <section class="dock">
+      <div class="dock-head">
+        <div class="dock-title">
+          <div class="brand">weather<span>R</span></div>
+          <h1><span id="city-title" data-i18n="place.szczecin">Щецин</span> <span data-i18n="radius">± 50 км</span></h1>
+        </div>
+        <button id="geo-plus" class="geo-plus" type="button" hidden>GEO+</button>
+      </div>
       <p id="summary" data-i18n="summary_loading">Считаем погоду в городе и в кольце вокруг него.</p>
       <p id="rain-soon" class="rain-soon" data-i18n="rain_soon" hidden>через ~5 мин дождь</p>
-      <div id="towns" class="towns"></div>
-      <div class="legend">
-        <div class="row"><span data-i18n="legend_center">центр</span> <span id="center-line">Щецин</span></div>
-        <div class="row"><span data-i18n="legend_ring">кольцо</span> <span data-i18n="radius_value">50 км</span></div>
-        <div class="row"><span data-i18n="legend_points">точки</span> <span id="count-line">—</span></div>
+      <div id="facts" class="facts" hidden></div>
+      <div class="list-field">
+        <div id="towns" class="towns"></div>
+      </div>
+      <div class="footer">
+        <div class="row"><span data-i18n="footer_center">центр</span> <span id="center-line">Щецин</span></div>
+        <div class="row"><span data-i18n="footer_ring">кольцо</span> <span data-i18n="radius_value">50 км</span></div>
+        <div class="row"><span data-i18n="footer_points">точки</span> <span id="count-line">—</span></div>
         <div class="source" id="source" data-i18n="sources_loading">считаем среднее</div>
       </div>
       <p id="geo-error" class="geo-error"></p>
       <button id="locate" class="locate" type="button" data-i18n="locate">Моё местоположение</button>
-      <button id="geo-plus" class="geo-plus" type="button" hidden>GEO+</button>
       <script>
         try {
           var savedPlace = JSON.parse(localStorage.getItem("weatherr-place") || "null");
@@ -36,17 +58,6 @@
           }
         } catch (error) {}
       </script>
-    </section>
-    <section class="map" aria-label="Карта радиуса 50 км вокруг Щецина">
-      <svg id="chart" viewBox="0 0 360 328">
-        <path d="M40 70 C90 40, 150 90, 180 60 C230 20, 300 80, 330 50 L330 300 C250 250, 180 290, 40 260 Z" fill="#1e5c42" opacity="0.85"/>
-        <path d="M0 150 C70 130, 120 180, 190 150 C250 126, 300 170, 360 150 L360 328 L0 328 Z" fill="#0e3a2c"/>
-        <path d="M150 40 C170 90, 155 140, 175 190 C190 230, 170 270, 190 320" stroke="#8ee0b4" stroke-width="8" fill="none" opacity="0.55" stroke-linecap="round"/>
-        <circle cx="188" cy="168" r="92" fill="none" stroke="#d9ffe8" stroke-width="1.5" stroke-dasharray="4 5" opacity="0.8"/>
-        <g id="markers"></g>
-      </svg>
-      <div class="users" id="users" data-i18n="users_unknown">Пользователей …</div>
-      <div class="tag" data-i18n="zone">зона расчёта · 50 км</div>
     </section>
   </main>
   <script src="/translate/index.js"></script>
