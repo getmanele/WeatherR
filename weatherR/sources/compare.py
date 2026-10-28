@@ -57,6 +57,15 @@ def parse_time(stamp, naive_zone=None):
     return moment
 
 
+def optional_float(value):
+    if value in (None, ""):
+        return None
+    try:
+        return float(str(value).replace(",", "."))
+    except (TypeError, ValueError):
+        return None
+
+
 def format_number(value, digits):
     number = round(float(value), digits)
     if abs(number - round(number)) < 10 ** (-digits) / 2:
@@ -165,7 +174,7 @@ def fetch_open_meteo(lat, lon):
             {
                 "latitude": lat,
                 "longitude": lon,
-                "current": "temperature_2m,weather_code,wind_speed_10m,precipitation",
+                "current": "temperature_2m,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,relative_humidity_2m,precipitation",
                 "minutely_15": "precipitation,weather_code",
                 "hourly": "precipitation,weather_code",
                 "forecast_minutely_15": 192,
@@ -206,6 +215,9 @@ def fetch_open_meteo(lat, lon):
             "error": None,
             "temp_c": float(current["temperature_2m"]),
             "wind_ms": float(current["wind_speed_10m"]),
+            "wind_deg": float(current["wind_direction_10m"]) if current.get("wind_direction_10m") is not None else None,
+            "gust_ms": optional_float(current.get("wind_gusts_10m")),
+            "humidity": optional_float(current.get("relative_humidity_2m")),
             "condition": condition_ru(current["weather_code"]),
             "note": None,
             **rain,
@@ -252,6 +264,9 @@ def fetch_met(lat, lon):
             "error": None,
             "temp_c": float(details["air_temperature"]),
             "wind_ms": float(details["wind_speed"]),
+            "wind_deg": float(details["wind_from_direction"]) if details.get("wind_from_direction") is not None else None,
+            "gust_ms": optional_float(details.get("wind_speed_of_gust")),
+            "humidity": optional_float(details.get("relative_humidity")),
             "condition": condition,
             "note": None,
             **rain,
@@ -291,6 +306,23 @@ def fetch_brightsky(lat, lon):
                     return float(row[key]) / 3.6
             return None
 
+        def wind_deg(row):
+            if not row:
+                return None
+            for key in ("wind_direction", "wind_direction_60", "wind_direction_30", "wind_direction_10"):
+                if row.get(key) is not None:
+                    return float(row[key])
+            return None
+
+        def gust_ms(row):
+            if not row:
+                return None
+            for key in ("wind_gust_speed", "wind_gust_speed_60", "wind_gust_speed_30", "wind_gust_speed_10"):
+                speed = optional_float(row.get(key))
+                if speed is not None:
+                    return speed / 3.6
+            return None
+
         precip_now = current.get("precipitation_60")
         if precip_now is None:
             precip_now = current.get("precipitation")
@@ -304,9 +336,18 @@ def fetch_brightsky(lat, lon):
         temp = current.get("temperature")
         if temp is None and nearest:
             temp = nearest.get("temperature")
-        wind = wind_ms(current) 
+        wind = wind_ms(current)
         if wind is None:
             wind = wind_ms(nearest)
+        direction = wind_deg(current)
+        if direction is None:
+            direction = wind_deg(nearest)
+        gust = gust_ms(current)
+        if gust is None:
+            gust = gust_ms(nearest)
+        humidity = optional_float(current.get("relative_humidity"))
+        if humidity is None and nearest:
+            humidity = optional_float(nearest.get("relative_humidity"))
         words = {
             "dry": "сухо",
             "rain": "дождь",
@@ -322,6 +363,9 @@ def fetch_brightsky(lat, lon):
             "error": None,
             "temp_c": None if temp is None else float(temp),
             "wind_ms": wind,
+            "wind_deg": direction,
+            "gust_ms": gust,
+            "humidity": humidity,
             "condition": words.get(condition),
             "note": None,
             **rain,
@@ -365,12 +409,17 @@ def fetch_imgw(lat, lon):
         observation = next((row for row in synop if row.get("stacja") == name), None)
         temp = None
         wind = None
+        direction = None
+        humidity = None
         raining_now = None
         if observation:
             if observation.get("temperatura") not in (None, ""):
                 temp = float(str(observation["temperatura"]).replace(",", "."))
             if observation.get("predkosc_wiatru") not in (None, ""):
                 wind = float(str(observation["predkosc_wiatru"]).replace(",", "."))
+            if observation.get("kierunek_wiatru") not in (None, ""):
+                direction = optional_float(observation.get("kierunek_wiatru"))
+            humidity = optional_float(observation.get("wilgotnosc_wzgledna"))
             if observation.get("suma_opadu") not in (None, ""):
                 raining_now = float(str(observation["suma_opadu"]).replace(",", ".")) > 0
         if temp is None and nearest.get("temperatura_max") not in (None, ""):
@@ -387,6 +436,8 @@ def fetch_imgw(lat, lon):
             "error": None if temp is not None or wind is not None else "empty",
             "temp_c": temp,
             "wind_ms": wind,
+            "wind_deg": direction,
+            "humidity": humidity,
             "condition": None,
             "raining_now": True if raining_now else None,
             "rain_hours": 0.0 if raining_now else None,
@@ -443,10 +494,24 @@ def rain_alert_phase(raining_now, rain_hours, step_min):
     return None
 
 
+def circular_mean(degrees):
+    values = [float(item) for item in degrees if item is not None]
+    if not values:
+        return None
+    sin_sum = sum(math.sin(math.radians(item)) for item in values)
+    cos_sum = sum(math.cos(math.radians(item)) for item in values)
+    if abs(sin_sum) < 1e-9 and abs(cos_sum) < 1e-9:
+        return None
+    return round(math.degrees(math.atan2(sin_sum, cos_sum)) % 360)
+
+
 def average_readings(readings):
     ok = [row for row in readings if row.get("ok")]
     temps = [row["temp_c"] for row in ok if row.get("temp_c") is not None]
     winds = [row["wind_ms"] for row in ok if row.get("wind_ms") is not None]
+    gusts = [row["gust_ms"] for row in ok if row.get("gust_ms") is not None]
+    humidities = [row["humidity"] for row in ok if row.get("humidity") is not None]
+    wind_deg = circular_mean(row.get("wind_deg") for row in ok)
     assessed = [row for row in ok if row.get("rain_assessed")]
     now = datetime.now(timezone.utc)
     rain_label = "нет данных о дожде"
@@ -478,7 +543,12 @@ def average_readings(readings):
         "temp_c": sum(temps) / len(temps) if temps else None,
         "temp_label": format_number(sum(temps) / len(temps), 1) if temps else "—",
         "wind_ms": sum(winds) / len(winds) if winds else None,
+        "wind_deg": wind_deg,
         "wind_label": f"{format_number(sum(winds) / len(winds), 1)} м/с" if winds else "—",
+        "gust_ms": sum(gusts) / len(gusts) if gusts else None,
+        "gust_label": f"{format_number(sum(gusts) / len(gusts), 1)} м/с" if gusts else None,
+        "humidity": sum(humidities) / len(humidities) if humidities else None,
+        "humidity_label": f"{format_number(sum(humidities) / len(humidities), 0)}%" if humidities else None,
         "condition": condition,
         "rain_label": rain_label,
         "rain_hours": rain_hours,
