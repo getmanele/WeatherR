@@ -1,0 +1,24 @@
+/* Не подключён к приложению. Цвет R как у .brand span в public/styles.css. */
+
+.wx-brand {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  font-size: 22px;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.wx-brand-r {
+  color: #ffffff;
+}
+
+.wx-brand-r.is-on {
+  color: #9dffc4;
+  text-shadow: 0 0 8px rgba(157, 255, 196, 0.85);
+}
+
+.wx-brand-r.is-off {
+  color: #ffffff;
+  text-shadow: none;
+}
