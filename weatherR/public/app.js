@@ -874,8 +874,44 @@ async function loadStats() {
   }
 }
 
+let openMeteoStamp = "";
+let openMeteoStep = 15;
+
+function paintOpenMeteoWait() {
+  const node = document.getElementById("om-wait");
+  if (!node) return;
+  if (!openMeteoStamp) {
+    node.textContent = "";
+    return;
+  }
+  const start = Date.parse(openMeteoStamp);
+  const next = start + openMeteoStep * 60000;
+  const left = Number.isFinite(start)
+    ? Math.max(0, Math.min(openMeteoStep, Math.ceil((next - Date.now()) / 60000)))
+    : openMeteoStep;
+  node.textContent = String(left);
+}
+
+function noteOpenMeteo(data) {
+  const stamp = data && data.open_meteo_at;
+  if (!stamp || stamp === openMeteoStamp) {
+    paintOpenMeteoWait();
+    return false;
+  }
+  const sources = (data.center && data.center.sources) || [];
+  if (sources.indexOf("open-meteo") === -1) {
+    paintOpenMeteoWait();
+    return false;
+  }
+  openMeteoStamp = stamp;
+  openMeteoStep = data.open_meteo_step_min || 15;
+  paintOpenMeteoWait();
+  return true;
+}
+
 function show(data) {
   report = data;
+  noteOpenMeteo(data);
   selectedId = myPlace ? myPlace.id : data.center.id;
   centerLine.textContent = WR.centerLine(data.center.temp_label);
   countLine.textContent = WR.cities(data.places.length);
@@ -1003,6 +1039,19 @@ if (mapNode && typeof ResizeObserver === "function") {
 }
 
 WR.choose().then(() => load());
+setInterval(paintOpenMeteoWait, 15000);
+setInterval(() => {
+  fetch("/api/weather").then((response) => {
+    if (!response.ok) return null;
+    return response.json();
+  }).then((data) => {
+    if (!data || !data.center) return;
+    const fresh = noteOpenMeteo(data);
+    if (!fresh || !selectedId) return;
+    report = data;
+    select(selectedId);
+  }).catch(() => {});
+}, 60000);
 setInterval(() => {
   const saved = savedPlace();
   if (!saved || !report) return;

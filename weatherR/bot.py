@@ -274,6 +274,8 @@ def describe(place, lat, lon, center):
         "sources_used": averaged["sources_used"],
         "sources_label": averaged["sources_label"],
         "sources": averaged["sources"],
+        "open_meteo_at": averaged.get("open_meteo_at"),
+        "open_meteo_step_min": averaged.get("open_meteo_step_min"),
         "outside_ring": outside,
         "observed": averaged.get("observed"),
     }
@@ -298,6 +300,8 @@ def fetch_report():
     return {
         "radius_km": RADIUS_KM,
         "updated": center_row.get("observed"),
+        "open_meteo_at": center_row.get("open_meteo_at"),
+        "open_meteo_step_min": center_row.get("open_meteo_step_min") or 15,
         "center": center_row,
         "places": places,
     }
@@ -601,14 +605,15 @@ WELCOME = {
 }
 HELP = {
     "ru": (
-        "weatherR 0.12 — погода в Щецине ± 50 км.\n\n"
+        "weatherR 0.13 — погода в Щецине ± 50 км.\n\n"
         "Открытие\n"
         "Синяя кнопка weatherR слева от поля ввода и «Открыть weatherR» открывают приложение. "
         "Язык выбирается внутри: русский, английский, польский, украинский, немецкий.\n\n"
         "Карта\n"
         "Кольцо 50 км занимает большую часть экрана и подстраивается под телефон. "
         "Подписи городов не наезжают друг на друга. О дожде на карте написано, только если он уже идёт или начнётся в ближайшие 5 минут. "
-        "Штрихи ветра показывают ветер выбранной точки.\n\n"
+        "Штрихи ветра показывают ветер выбранной точки. "
+        "Внизу слева тихое число: минуты до следующего обновления Open-Meteo. Новый ответ в среднем снова ставит 15.\n\n"
         "За кольцом\n"
         "Хощно и Хмельницкий стоят под кольцом, только названием, на стороне от вашего места.\n\n"
         "Список\n"
@@ -619,14 +624,15 @@ HELP = {
         "Сохраните место кнопкой внизу. Она сменится на GEO+. Если там примерно через 5 минут начнётся дождь, бот напишет в этот чат."
     ),
     "en": (
-        "weatherR 0.12 — weather in Szczecin ± 50 km.\n\n"
+        "weatherR 0.13 — weather in Szczecin ± 50 km.\n\n"
         "Open\n"
         "The blue weatherR button left of the message field and “Open weatherR” open the app. "
         "The language is chosen inside: Russian, English, Polish, Ukrainian, German.\n\n"
         "Map\n"
         "The 50 km ring takes most of the screen and fits the phone. "
         "City labels do not overlap. A rain line appears on the map only if rain is falling or starts within 5 minutes. "
-        "Wind streaks follow the selected place.\n\n"
+        "Wind streaks follow the selected place. "
+        "A quiet number at the lower left is the minutes until the next Open-Meteo update. A new reading in the average sets it back to 15.\n\n"
         "Outside the ring\n"
         "Choszczno and Khmelnytskyi sit below the ring, name only, on the side away from your place.\n\n"
         "List\n"
@@ -637,14 +643,15 @@ HELP = {
         "Save it with the button at the bottom. The button becomes GEO+. If rain is due there in about 5 minutes, the bot writes in this chat."
     ),
     "pl": (
-        "weatherR 0.12 — pogoda w Szczecinie ± 50 km.\n\n"
+        "weatherR 0.13 — pogoda w Szczecinie ± 50 km.\n\n"
         "Otwarcie\n"
         "Niebieski przycisk weatherR po lewej stronie pola wiadomości i „Otwórz weatherR” otwierają aplikację. "
         "Język wybiera się w środku: rosyjski, angielski, polski, ukraiński, niemiecki.\n\n"
         "Mapa\n"
         "Pierścień 50 km zajmuje większość ekranu i dopasowuje się do telefonu. "
         "Podpisy miast nie nachodzą na siebie. O deszczu na mapie jest napis tylko wtedy, gdy już pada albo zacznie się w ciągu 5 minut. "
-        "Kreski wiatru pokazują wiatr wybranego punktu.\n\n"
+        "Kreski wiatru pokazują wiatr wybranego punktu. "
+        "Na dole po lewej cicha liczba: minuty do następnej aktualizacji Open-Meteo. Nowy odczyt w średniej znów daje 15.\n\n"
         "Poza pierścieniem\n"
         "Choszczno i Chmielnicki stoją pod pierścieniem, sama nazwa, po stronie dalszej od twojego miejsca.\n\n"
         "Lista\n"
@@ -655,14 +662,15 @@ HELP = {
         "Zapisz je przyciskiem na dole. Przycisk zmieni się w GEO+. Jeśli deszcz zacznie się tam za około 5 minut, bot napisze na tym czacie."
     ),
     "uk": (
-        "weatherR 0.12 — погода в Щецині ± 50 км.\n\n"
+        "weatherR 0.13 — погода в Щецині ± 50 км.\n\n"
         "Відкриття\n"
         "Синя кнопка weatherR ліворуч від поля повідомлення і «Відкрити weatherR» відкривають застосунок. "
         "Мову обирають усередині: російська, англійська, польська, українська, німецька.\n\n"
         "Карта\n"
         "Кільце 50 км займає більшу частину екрана і підлаштовується під телефон. "
         "Підписи міст не накладаються. Про дощ на карті написано, лише якщо він уже йде або почнеться протягом 5 хвилин. "
-        "Риски вітру показують вітер вибраної точки.\n\n"
+        "Риски вітру показують вітер вибраної точки. "
+        "Знизу ліворуч тихе число: хвилини до наступного оновлення Open-Meteo. Нова відповідь у середньому знову ставить 15.\n\n"
         "За кільцем\n"
         "Хощно і Хмельницький стоять під кільцем, лише назвою, з боку від вашого місця.\n\n"
         "Список\n"
@@ -673,14 +681,15 @@ HELP = {
         "Збережіть місце кнопкою внизу. Вона зміниться на GEO+. Якщо там приблизно за 5 хвилин почнеться дощ, бот напише в цей чат."
     ),
     "de": (
-        "weatherR 0.12 — Wetter in Stettin ± 50 km.\n\n"
+        "weatherR 0.13 — Wetter in Stettin ± 50 km.\n\n"
         "Öffnen\n"
         "Die blaue Taste weatherR links vom Eingabefeld und „weatherR öffnen“ öffnen die App. "
         "Die Sprache wird in der App gewählt: Russisch, Englisch, Polnisch, Ukrainisch, Deutsch.\n\n"
         "Karte\n"
         "Der 50-km-Ring nimmt den größten Teil des Bildschirms ein und passt sich dem Telefon an. "
         "Ortsnamen überlappen sich nicht. Regen steht auf der Karte nur, wenn er schon fällt oder in 5 Minuten beginnt. "
-        "Die Windstriche zeigen den Wind des gewählten Ortes.\n\n"
+        "Die Windstriche zeigen den Wind des gewählten Ortes. "
+        "Unten links eine leise Zahl: Minuten bis zur nächsten Open-Meteo-Aktualisierung. Eine neue Messung im Mittel setzt sie auf 15.\n\n"
         "Außerhalb des Rings\n"
         "Choszczno und Chmelnyzkyj stehen unter dem Ring, nur der Name, auf der Seite weg von Ihrem Ort.\n\n"
         "Liste\n"

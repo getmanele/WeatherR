@@ -203,7 +203,9 @@ def fetch_open_meteo(lat, lon):
             precip = (hourly.get("precipitation") or [None])[index]
             code = (hourly.get("weather_code") or [None])[index]
             slots.append((start, is_rain_code(precip, code), 1))
-        current_step = 0.25 if int(current.get("interval") or 3600) <= 900 else 1
+        interval = int(current.get("interval") or 900)
+        current_step = 0.25 if interval <= 900 else 1
+        observed = parse_time(current["time"], WARSAW).isoformat() if current.get("time") else None
         rain = rain_from_hours(
             now,
             is_rain_code(current.get("precipitation"), current.get("weather_code"), 0.1 * current_step),
@@ -220,6 +222,8 @@ def fetch_open_meteo(lat, lon):
             "humidity": optional_float(current.get("relative_humidity_2m")),
             "condition": condition_ru(current["weather_code"]),
             "note": None,
+            "observed": observed,
+            "step_min": max(1, int(round(interval / 60))),
             **rain,
         }
     except (urllib.error.URLError, TimeoutError, KeyError, json.JSONDecodeError, ValueError) as error:
@@ -539,6 +543,7 @@ def average_readings(readings):
     condition = next((row["condition"] for row in ok if row.get("condition")), "облачно")
     used = len(ok)
     minutes = None if rain_hours is None else round(rain_hours * 60, 1)
+    open_meteo = next((row for row in ok if row.get("source") == "open-meteo" and row.get("temp_c") is not None), None)
     return {
         "temp_c": sum(temps) / len(temps) if temps else None,
         "temp_label": format_number(sum(temps) / len(temps), 1) if temps else "—",
@@ -559,6 +564,8 @@ def average_readings(readings):
         "sources_label": f"среднее из {used}",
         "sources": [row["source"] for row in ok],
         "source_notes": {row["source"]: row.get("note") for row in ok if row.get("note")},
+        "open_meteo_at": open_meteo.get("observed") if open_meteo else None,
+        "open_meteo_step_min": open_meteo.get("step_min") if open_meteo else None,
         "observed": datetime.now(WARSAW).replace(microsecond=0).isoformat(),
     }
 

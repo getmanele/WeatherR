@@ -352,13 +352,14 @@ svg {
 .tag {
   position: absolute;
   left: 16px;
-  bottom: 10px;
+  bottom: 12px;
   z-index: 4;
   font-size: 12px;
-  color: #d9ffe9;
-  background: rgba(8, 28, 20, 0.55);
-  border-radius: 999px;
-  padding: 5px 10px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(184, 206, 194, 0.38);
+  background: none;
+  padding: 0;
+  pointer-events: none;
 }
 
 @media (min-width: 860px) {
