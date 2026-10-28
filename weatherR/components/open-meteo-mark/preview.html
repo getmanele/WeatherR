@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>weatherR — буква R</title>
+<link rel="stylesheet" href="open-meteo-mark.css" />
+<style>
+  body {
+    margin: 0;
+    background: #081710;
+    color: #e9fff3;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  }
+  main { padding: 28px 22px 36px; display: flex; flex-direction: column; gap: 28px; }
+  .row { display: flex; align-items: baseline; gap: 10px; }
+  h1 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 620;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+  }
+  .note { margin: 8px 0 0; color: #9fb8aa; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <div class="row">
+      <div id="on"></div>
+      <h1>Щецин ± 50 км</h1>
+    </div>
+    <p class="note">Open-Meteo пришёл и вошёл в среднее</p>
+  </div>
+  <div>
+    <div class="row">
+      <div id="off"></div>
+      <h1>Щецин ± 50 км</h1>
+    </div>
+    <p class="note">данных Open-Meteo нет</p>
+  </div>
+</main>
+<script src="open-meteo-mark.js"></script>
+<script>
+  var mark = window.weatherROpenMeteoMark;
+  mark.mount(document.getElementById("on"), { sources: ["open-meteo", "met-norway", "brightsky", "imgw"] });
+  mark.mount(document.getElementById("off"), { sources: ["met-norway", "brightsky", "imgw"] });
+</script>
+</body>
+</html>
