@@ -1,0 +1,41 @@
+.lang-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+  padding: 28px 22px calc(28px + env(safe-area-inset-bottom));
+  background: #0c241b;
+  color: #e9fff3;
+}
+
+.lang-gate .brand {
+  font-size: 28px;
+}
+
+.lang-gate p {
+  margin: 0 0 8px;
+  color: #9dccb2;
+  font-size: 14px;
+}
+
+.lang-gate button {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(157, 255, 196, 0.28);
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #e9fff3;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 620;
+  cursor: pointer;
+}
+
+.lang-gate button.is-saved {
+  border-color: #9dffc4;
+  background: rgba(157, 255, 196, 0.12);
+}

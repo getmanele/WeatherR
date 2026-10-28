@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<title>weatherR — сейчас</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 640px; height: 360px; overflow: hidden; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    color: #e9fff3;
+    background:
+      radial-gradient(520px 280px at 88% -10%, rgba(140, 255, 196, 0.22), transparent 60%),
+      radial-gradient(420px 260px at -10% 110%, rgba(40, 120, 80, 0.45), transparent 55%),
+      linear-gradient(160deg, #10281f 0%, #0b1c16 55%, #07140f 100%);
+  }
+  .wrap { height: 360px; padding: 18px 22px 16px; display: flex; flex-direction: column; }
+  .top { display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: baseline; gap: 2px; font-weight: 650; letter-spacing: -0.04em; font-size: 22px; }
+  .brand span { color: #9dffc4; }
+  .chip {
+    font-size: 12px; color: #c9f5dc; background: rgba(157, 255, 196, 0.1);
+    border: 1px solid rgba(157, 255, 196, 0.28); border-radius: 999px; padding: 5px 10px;
+  }
+  .main { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 18px; }
+  .place { font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: #9dccb2; }
+  .temp { font-size: 86px; line-height: 0.85; font-weight: 560; letter-spacing: -0.05em; margin-top: 6px; }
+  .temp small { font-size: 34px; vertical-align: super; margin-left: 2px; color: #b7ebcd; }
+  .cond { text-align: right; padding-bottom: 8px; }
+  .cond strong { display: block; font-size: 22px; font-weight: 600; }
+  .cond p { margin-top: 4px; color: #b7d8c6; font-size: 14px; }
+  .ico { width: 54px; height: 54px; margin-left: auto; margin-bottom: 8px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: auto; }
+  .stat {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(180, 240, 205, 0.14);
+    border-radius: 14px; padding: 10px 12px;
+  }
+  .stat b { display: block; font-size: 16px; font-weight: 620; }
+  .stat span { display: block; margin-top: 2px; font-size: 11px; color: #9dccb2; letter-spacing: 0.02em; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">weather<span>R</span></div>
+      <div class="chip">Щецин · радиус 50 км</div>
+    </div>
+    <div class="main">
+      <div>
+        <div class="place">сейчас в Щецине</div>
+        <div class="temp">14<small>°</small></div>
+      </div>
+      <div class="cond">
+        <svg class="ico" viewBox="0 0 64 64" fill="none">
+          <circle cx="26" cy="24" r="10" fill="#f3e7a2"/>
+          <path d="M18 40h28a10 10 0 0 0 0-20 14 14 0 0 0-27-3A9 9 0 0 0 18 40z" fill="#d9ffe8"/>
+        </svg>
+        <strong>переменная облачность</strong>
+        <p>ощущается как 12° · ветер с запада</p>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>4 м/с</b><span>ветер</span></div>
+      <div class="stat"><b>72%</b><span>влажность</span></div>
+      <div class="stat"><b>1014</b><span>давление, гПа</span></div>
+      <div class="stat"><b>8 км</b><span>видимость</span></div>
+    </div>
+  </div>
+</body>
+</html>
