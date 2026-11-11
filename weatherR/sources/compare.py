@@ -488,12 +488,7 @@ def rain_alert_phase(raining_now, rain_hours, step_min):
     if rain_hours is None:
         return None
     minutes = rain_hours * 60
-    step = step_min or 60
-    if step >= 15:
-        if 0 < minutes <= step + 0.5:
-            return "soon"
-        return None
-    if 3 <= minutes <= 7:
+    if 0 < minutes <= 15.5:
         return "soon"
     return None
 

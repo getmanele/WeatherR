@@ -868,7 +868,7 @@ async function loadStats() {
     const response = await fetch("/api/stats");
     if (!response.ok) throw new Error(String(response.status));
     const data = await response.json();
-    node.textContent = WR.users(data.users);
+    node.textContent = WR.users(data.users, data.today);
   } catch (error) {
     node.textContent = WR.t("users_empty");
   }

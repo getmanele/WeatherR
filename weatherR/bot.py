@@ -450,11 +450,20 @@ def remember_user(telegram_id, username=None, first_name=None, last_name=None, l
     return profile
 
 
-def user_count():
+def user_stats():
     if not DB_PATH.exists():
-        return 0
+        return {"users": 0, "today": 0}
+    today = datetime.now(WARSAW).date().isoformat()
     with connect_db() as conn:
-        return conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        total = conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
+        day = conn.execute(
+            """
+            SELECT COUNT(*) FROM users
+            WHERE substr(COALESCE(last_seen_at, added_at), 1, 10) = ?
+            """,
+            (today,),
+        ).fetchone()[0]
+    return {"users": total, "today": day}
 
 
 def get_point(lat, lon):
@@ -490,7 +499,7 @@ class AppHandler(SimpleHTTPRequestHandler):
             self.serve_point()
             return
         if path == "/api/stats":
-            self.send_json({"users": user_count()})
+            self.send_json(user_stats())
             return
         if path == "/":
             self.path = "/index.html"
@@ -605,9 +614,9 @@ WELCOME = {
 }
 HELP = {
     "ru": (
-        "weatherR 0.13 — погода в Щецине ± 50 км.\n\n"
+        "weatherR 0.14 — погода в Щецине ± 50 км.\n\n"
         "Открытие\n"
-        "Синяя кнопка weatherR слева от поля ввода и «Открыть weatherR» открывают приложение. "
+        "Синяя кнопка weatherR слева от поля ввода открывает приложение. "
         "Язык выбирается внутри: русский, английский, польский, украинский, немецкий.\n\n"
         "Карта\n"
         "Кольцо 50 км занимает большую часть экрана и подстраивается под телефон. "
@@ -621,12 +630,12 @@ HELP = {
         "Под заголовком\n"
         "weatherR и «Щецин ± 50 км» в одной строке. Ниже полная сводка и кнопки: дождь, средний ветер, порыв, влажность.\n\n"
         "Ваше место\n"
-        "Сохраните место кнопкой внизу. Она сменится на GEO+. Если там примерно через 5 минут начнётся дождь, бот напишет в этот чат."
+        "Сохраните место кнопкой внизу. Она сменится на GEO+. Если там примерно через 15 минут начнётся дождь, бот напишет в этот чат."
     ),
     "en": (
-        "weatherR 0.13 — weather in Szczecin ± 50 km.\n\n"
+        "weatherR 0.14 — weather in Szczecin ± 50 km.\n\n"
         "Open\n"
-        "The blue weatherR button left of the message field and “Open weatherR” open the app. "
+        "The blue weatherR button left of the message field opens the app. "
         "The language is chosen inside: Russian, English, Polish, Ukrainian, German.\n\n"
         "Map\n"
         "The 50 km ring takes most of the screen and fits the phone. "
@@ -640,12 +649,12 @@ HELP = {
         "Under the title\n"
         "weatherR and “Szczecin ± 50 km” are on one line. Below that: the full summary and buttons for rain, average wind, gust and humidity.\n\n"
         "Your place\n"
-        "Save it with the button at the bottom. The button becomes GEO+. If rain is due there in about 5 minutes, the bot writes in this chat."
+        "Save it with the button at the bottom. The button becomes GEO+. If rain is due there in about 15 minutes, the bot writes in this chat."
     ),
     "pl": (
-        "weatherR 0.13 — pogoda w Szczecinie ± 50 km.\n\n"
+        "weatherR 0.14 — pogoda w Szczecinie ± 50 km.\n\n"
         "Otwarcie\n"
-        "Niebieski przycisk weatherR po lewej stronie pola wiadomości i „Otwórz weatherR” otwierają aplikację. "
+        "Niebieski przycisk weatherR po lewej stronie pola wiadomości otwiera aplikację. "
         "Język wybiera się w środku: rosyjski, angielski, polski, ukraiński, niemiecki.\n\n"
         "Mapa\n"
         "Pierścień 50 km zajmuje większość ekranu i dopasowuje się do telefonu. "
@@ -659,12 +668,12 @@ HELP = {
         "Pod tytułem\n"
         "weatherR i „Szczecin ± 50 km” są w jednej linii. Niżej pełne podsumowanie i przyciski: deszcz, średni wiatr, poryw, wilgotność.\n\n"
         "Twoje miejsce\n"
-        "Zapisz je przyciskiem na dole. Przycisk zmieni się w GEO+. Jeśli deszcz zacznie się tam za około 5 minut, bot napisze na tym czacie."
+        "Zapisz je przyciskiem na dole. Przycisk zmieni się w GEO+. Jeśli deszcz zacznie się tam za około 15 minut, bot napisze na tym czacie."
     ),
     "uk": (
-        "weatherR 0.13 — погода в Щецині ± 50 км.\n\n"
+        "weatherR 0.14 — погода в Щецині ± 50 км.\n\n"
         "Відкриття\n"
-        "Синя кнопка weatherR ліворуч від поля повідомлення і «Відкрити weatherR» відкривають застосунок. "
+        "Синя кнопка weatherR ліворуч від поля повідомлення відкриває застосунок. "
         "Мову обирають усередині: російська, англійська, польська, українська, німецька.\n\n"
         "Карта\n"
         "Кільце 50 км займає більшу частину екрана і підлаштовується під телефон. "
@@ -678,12 +687,12 @@ HELP = {
         "Під заголовком\n"
         "weatherR і «Щецин ± 50 км» в одному рядку. Нижче повна сводка і кнопки: дощ, середній вітер, порив, вологість.\n\n"
         "Ваше місце\n"
-        "Збережіть місце кнопкою внизу. Вона зміниться на GEO+. Якщо там приблизно за 5 хвилин почнеться дощ, бот напише в цей чат."
+        "Збережіть місце кнопкою внизу. Вона зміниться на GEO+. Якщо там приблизно за 15 хвилин почнеться дощ, бот напише в цей чат."
     ),
     "de": (
-        "weatherR 0.13 — Wetter in Stettin ± 50 km.\n\n"
+        "weatherR 0.14 — Wetter in Stettin ± 50 km.\n\n"
         "Öffnen\n"
-        "Die blaue Taste weatherR links vom Eingabefeld und „weatherR öffnen“ öffnen die App. "
+        "Die blaue Taste weatherR links vom Eingabefeld öffnet die App. "
         "Die Sprache wird in der App gewählt: Russisch, Englisch, Polnisch, Ukrainisch, Deutsch.\n\n"
         "Karte\n"
         "Der 50-km-Ring nimmt den größten Teil des Bildschirms ein und passt sich dem Telefon an. "
@@ -697,7 +706,7 @@ HELP = {
         "Unter der Überschrift\n"
         "weatherR und „Stettin ± 50 km“ stehen in einer Zeile. Darunter die volle Zusammenfassung und Tasten: Regen, mittlerer Wind, Böe, Luftfeuchte.\n\n"
         "Ihr Ort\n"
-        "Speichern Sie ihn mit der Taste unten. Sie wird zu GEO+. Wenn dort in etwa 5 Minuten Regen beginnt, schreibt der Bot in diesen Chat."
+        "Speichern Sie ihn mit der Taste unten. Sie wird zu GEO+. Wenn dort in etwa 15 Minuten Regen beginnt, schreibt der Bot in diesen Chat."
     ),
 }
 OPEN_APP = {
@@ -735,12 +744,13 @@ def app_url(lang):
 
 
 def reply_markup(lang):
-    code = language_id(lang)
-    rows = []
-    if WEBAPP_URL.startswith("https://"):
-        rows.append([{"text": OPEN_APP[code], "web_app": {"url": app_url(code)}}])
-    rows.append([{"text": "/help"}])
-    return {"keyboard": rows, "resize_keyboard": True, "is_persistent": True}
+    # Приложение открывает только синяя кнопка меню weatherR.
+    # Кнопку «Открыть weatherR» внизу чата не показываем.
+    return {
+        "keyboard": [[{"text": "/help"}]],
+        "resize_keyboard": True,
+        "is_persistent": True,
+    }
 
 
 def welcome_text(lang):
@@ -800,25 +810,17 @@ def rain_watch_loop():
 
 
 RAIN_SOON = {
-    "ru": "через ~5 мин дождь",
-    "pl": "za ~5 min deszcz",
-    "en": "rain in ~5 min",
-    "de": "in ~5 Min. Regen",
-    "uk": "через ~5 хв дощ",
-}
-RAIN_NOW = {
-    "ru": "дождь уже идёт",
-    "pl": "deszcz już pada",
-    "en": "rain is already falling",
-    "de": "Regen fällt schon",
-    "uk": "дощ уже йде",
+    "ru": "через ~15 мин дождь",
+    "pl": "za ~15 min deszcz",
+    "en": "rain in ~15 min",
+    "de": "in ~15 Min. Regen",
+    "uk": "через ~15 хв дощ",
 }
 
 
-def rain_message(kind, language_code):
-    pack = RAIN_SOON if kind == "soon" else RAIN_NOW
+def rain_message(language_code):
     code = str(language_code or "ru").replace("_", "-").split("-")[0].lower()
-    return pack.get(code) or pack["ru"]
+    return RAIN_SOON.get(code) or RAIN_SOON["ru"]
 
 
 def check_rain_alerts():
@@ -840,13 +842,11 @@ def check_rain_alerts():
         prev = prev or None
         new = prev
         text = None
-        if phase == "soon" and prev not in ("soon", "now"):
-            text = rain_message("soon", language_code)
+        # В чат только «дождь через ~15 мин» по координатам пользователя.
+        if phase == "soon" and prev != "soon":
+            text = rain_message(language_code)
             new = "soon"
-        elif phase == "now" and prev not in ("soon", "now"):
-            text = rain_message("now", language_code)
-            new = "now"
-        elif phase == "now" and prev == "soon":
+        elif phase == "now":
             new = "now"
         elif not phase:
             new = None
@@ -879,6 +879,14 @@ def poll_loop():
                     handle_update(update)
                 except Exception as error:
                     print(f"сообщение не отправлено: {type(error).__name__}", flush=True)
+        except urllib.error.HTTPError as error:
+            body = ""
+            try:
+                body = error.read().decode("utf-8", "replace")[:180]
+            except Exception:
+                body = ""
+            print(f"опрос Telegram: HTTP {error.code} {body}", flush=True)
+            time.sleep(3)
         except Exception as error:
             print(f"опрос Telegram: {type(error).__name__}", flush=True)
             time.sleep(3)

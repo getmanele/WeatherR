@@ -178,9 +178,10 @@
     return t("eurozone", { country: name });
   }
 
-  function users(value) {
-    if (value == null || value === "") return t("users_empty");
-    return t("users", { n: value });
+  function users(total, today) {
+    if (total == null || total === "") return t("users_empty");
+    const day = today == null || today === "" ? 0 : today;
+    return t("users", { n: total, today: day });
   }
 
   function apply() {
